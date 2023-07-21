@@ -1,0 +1,70 @@
+﻿@page "/"
+@using BlazorEmpresasCrud.Models
+@inject IJSRuntime JSRuntime
+@inject BlazorEmpresasCrud.Services.Interfaces.IEmpresaService EmpresaService
+
+<PageTitle>Index empresas</PageTitle>
+
+<h1>Empresas</h1>
+<a href="/create" class="btn btn-sucess">Criar</a>
+
+<table class="table table-responsive table-striped">
+    <thead>
+        <tr>
+            <th>Id</th>
+            <th>Nome da empresa</th>
+            <th>Telefone</th>
+            <th></th>
+        </tr>
+
+    </thead>
+    <tbody>
+        @if(empresas!=null && empresas.Count > 0)
+        {
+            foreach(var emp in empresas)
+            {
+                <tr>
+                    <td>@emp.Id</td>
+                    <td>@emp.Name</td>
+                    <td>@emp.Phone</td>
+                    <td>
+                        <a href="/update/@emp.Id" class="btn btn-warning">Atualizar</a>
+                        <button class="btn btn-danger" @onclick="async () => await RemoveEmpresa(emp.Id)">Deletar</button>
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+
+</table>
+
+
+
+@code{
+    List<Empresa> empresas = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        empresas = await EmpresaService.GetAll();
+    }
+
+
+     async Task RemoveEmpresa(Guid id)
+    {
+        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", "Realmente deseja remover a empresa da lista?");
+       
+        if (confirmed is false){
+            return;
+            }
+
+        else{
+        var empresa = await EmpresaService.GetById(id);
+
+        await EmpresaService.Remove(empresa);
+
+        empresas = await EmpresaService.GetAll();
+
+        StateHasChanged();
+        }
+    }
+}
